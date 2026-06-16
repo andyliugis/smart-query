@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smart-query
+
+  # 智谱 AI 配置 (Spring AI 原生支持)
+  ai:
+    zhipuai:
+      api-key: ${ZHIPU_API_KEY:f8bb55036605470ab39081389e96d009.3SFoxTX4wObofgqh}
+      chat:
+        options:
+          model: glm-4-flash
+          temperature: 0.1
+
+  # H2 数据源配置
+  datasource:
+    url: jdbc:h2:mem:smartquery;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # H2 Console (开发调试用)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # 初始化数据
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+# 日志
+logging:
+  level:
+    com.smartquery: DEBUG
+    org.springframework.ai: DEBUG
