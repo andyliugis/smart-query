@@ -42,14 +42,14 @@
           <div class="tab-content">
             <div v-if="hasExecutionPlan" class="execution-plan">
               <el-table
-                :data="selectedMessage.response?.executionPlan"
+                :data="selectedMessage?.response?.executionPlan || []"
                 border
                 size="small"
                 max-height="400"
                 style="width: 100%"
               >
                 <el-table-column
-                  v-for="(value, key) in selectedMessage.response?.executionPlan[0]"
+                  v-for="(value, key) in (selectedMessage?.response?.executionPlan?.[0] || {})"
                   :key="key"
                   :prop="key"
                   :label="key"

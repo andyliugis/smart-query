@@ -36,6 +36,18 @@
 
           <!-- 多标签页切换 -->
           <el-tabs v-model="activeTab" class="message-tabs" type="border-card">
+            <!-- 图表视图 -->
+            <el-tab-pane label="📊 图表" name="chart">
+              <div class="tab-content">
+                <ChartComponent
+                  v-if="response?.columns?.length && response?.data?.length"
+                  :columns="response.columns"
+                  :data="response.data"
+                />
+                <el-empty v-else description="无数据可可视化" :image-size="60" />
+              </div>
+            </el-tab-pane>
+
             <!-- 表格视图 -->
             <el-tab-pane label="📋 数据" name="table">
               <div class="tab-content">
@@ -68,9 +80,14 @@
                 <div class="sql-block">
                   <div class="sql-header">
                     <span>生成的 SQL</span>
-                    <el-button size="small" text @click="copySQL">
-                      📋 复制
-                    </el-button>
+                    <div class="sql-actions">
+                      <el-button size="small" text @click="editSQL">
+                        ✏️ 编辑
+                      </el-button>
+                      <el-button size="small" text @click="copySQL">
+                        📋 复制
+                      </el-button>
+                    </div>
                   </div>
                   <pre class="sql-code"><code>{{ response?.sql || '' }}</code></pre>
                 </div>
@@ -104,11 +121,37 @@
       </template>
     </div>
   </div>
+
+  <!-- SQL 编辑弹窗 -->
+  <el-dialog
+    v-model="showSqlEditor"
+    title="编辑 SQL"
+    width="700px"
+    :close-on-click-modal="false"
+  >
+    <div class="sql-editor">
+      <el-input
+        v-model="editingSql"
+        type="textarea"
+        :rows="10"
+        placeholder="在此编辑 SQL..."
+        class="sql-textarea"
+      />
+    </div>
+    <template #footer>
+      <el-button @click="showSqlEditor = false">取消</el-button>
+      <el-button type="primary" @click="executeEditedSql" :loading="executingSql">
+        执行查询
+      </el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import ChartComponent from './ChartComponent.vue'
+import { executeSql } from '../api/queryApi'
 import type { QueryResponse } from '../api/queryApi'
 import type { ChatMessage } from '../api/chatApi'
 
@@ -125,11 +168,15 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'like'): void
   (e: 'dislike'): void
+  (e: 'sql-executed', response: QueryResponse): void
 }>()
 
 const activeTab = ref('table')
 const liked = ref(false)
 const disliked = ref(false)
+const showSqlEditor = ref(false)
+const editingSql = ref('')
+const executingSql = ref(false)
 
 const isUser = props.message.role === 'user'
 const hasData = props.response?.success && (props.response.data?.length > 0 || props.response.sql)
@@ -148,6 +195,30 @@ async function copySQL() {
     ElMessage.success('SQL 已复制')
   } catch {
     ElMessage.warning('复制失败')
+  }
+}
+
+function editSQL() {
+  editingSql.value = props.response?.sql || ''
+  showSqlEditor.value = true
+}
+
+async function executeEditedSql() {
+  if (!editingSql.value.trim()) {
+    ElMessage.warning('SQL 不能为空')
+    return
+  }
+
+  executingSql.value = true
+  try {
+    const response = await executeSql(editingSql.value)
+    emit('sql-executed', response)
+    showSqlEditor.value = false
+    ElMessage.success('SQL 执行成功')
+  } catch (error: any) {
+    ElMessage.error(error.message || '执行失败')
+  } finally {
+    executingSql.value = false
   }
 }
 
@@ -347,5 +418,20 @@ function handleDislike() {
 .message-actions .el-button.action-active {
   background: #eff6ff;
   color: #3b82f6;
+}
+
+.sql-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.sql-editor {
+  margin-bottom: 16px;
+}
+
+.sql-textarea :deep(.el-textarea__inner) {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
 }
 </style>

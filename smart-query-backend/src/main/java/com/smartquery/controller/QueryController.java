@@ -116,6 +116,46 @@ public class QueryController {
     }
 
     /**
+     * 执行用户编辑后的 SQL
+     * POST /api/query/execute
+     */
+    @PostMapping("/query/execute")
+    public QueryResponse executeSql(@RequestBody Map<String, String> request) {
+        String sql = request.get("sql");
+        if (sql == null || sql.trim().isEmpty()) {
+            return QueryResponse.error("SQL 不能为空");
+        }
+
+        try {
+            // 获取执行计划
+            List<Map<String, Object>> executionPlan = null;
+            try {
+                executionPlan = sqlExecutorService.getExecutionPlan(sql);
+            } catch (Exception e) {
+                log.warn("获取执行计划失败: {}", e.getMessage());
+            }
+
+            // 执行 SQL
+            Map<String, Object> result = sqlExecutorService.executeQuery(sql);
+
+            @SuppressWarnings("unchecked")
+            List<String> columns = (List<String>) result.get("columns");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+
+            String explanation = String.format("执行您编辑的 SQL，共返回 %d 条结果。", data.size());
+
+            return QueryResponse.success(sql, columns, data, explanation, executionPlan, null);
+
+        } catch (SecurityException e) {
+            return QueryResponse.error("查询安全限制: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("SQL 执行失败", e);
+            return QueryResponse.error("执行失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 健康检查
      */
     @GetMapping("/health")

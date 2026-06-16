@@ -25,6 +25,14 @@ export async function queryData(request: QueryRequest): Promise<QueryResponse> {
 }
 
 /**
+ * 执行用户编辑后的 SQL
+ */
+export async function executeSql(sql: string): Promise<QueryResponse> {
+  const response = await api.post<QueryResponse>('/query/execute', { sql })
+  return response.data
+}
+
+/**
  * 健康检查
  */
 export async function healthCheck(): Promise<boolean> {

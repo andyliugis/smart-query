@@ -142,7 +142,7 @@
           <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" text @click="editTag(row)">编辑</el-button>
-              <el-popconfirm title="确认删除此标签？" @confirm="deleteTag(row.id)">
+              <el-popconfirm title="确认删除此标签？" @confirm="handleDeleteTag(row.id)">
                 <template #reference>
                   <el-button type="danger" size="small" text>删除</el-button>
                 </template>
@@ -408,7 +408,7 @@ function editTag(tag: TagDefinition) {
   showTagDialog(tag)
 }
 
-async function deleteTag(id: number) {
+async function handleDeleteTag(id: number) {
   try {
     await deleteTag(id)
     ElMessage.success('删除成功')

@@ -30,7 +30,7 @@
             <div class="session-time">{{ formatTime(session.updatedAt) }}</div>
           </div>
           <div class="session-actions">
-            <el-dropdown trigger="click" @command="(cmd) => handleSessionAction(cmd, session)">
+            <el-dropdown trigger="click" @command="(cmd: 'rename' | 'delete') => handleSessionAction(cmd, session)">
               <el-button text size="small" class="more-btn">
                 <span class="more-icon">⋮</span>
               </el-button>

@@ -61,6 +61,7 @@
             :loading="msg.loading"
             @like="handleLike(msg)"
             @dislike="handleDislike(msg)"
+            @sql-executed="(response) => handleSqlExecuted(msg, response)"
           />
         </div>
       </div>
@@ -116,6 +117,7 @@ import MessageCard from '../components/MessageCard.vue'
 import DetailPanel from '../components/DetailPanel.vue'
 import { queryData, type QueryResponse } from '../api/queryApi'
 import { getSessionMessages, createSession, type ChatMessage } from '../api/chatApi'
+import { submitFeedback } from '../api/feedbackApi'
 
 interface MessageWithResponse extends ChatMessage {
   response?: QueryResponse
@@ -226,14 +228,79 @@ async function sendMessage() {
   isSending.value = true
 
   try {
-    const response = await queryData({
-      question,
-      sessionId: currentSessionId.value
-    })
+    // 使用流式 API
+    const { streamQuery } = await import('../api/streamApi')
     
-    aiMsg.loading = false
-    aiMsg.response = response
-    aiMsg.generatedSql = response.sql
+    await streamQuery(question, currentSessionId.value, {
+      onStatus: (message, step) => {
+        aiMsg.content = message
+      },
+      onSql: (sql) => {
+        if (!aiMsg.response) {
+          aiMsg.response = {
+            success: true,
+            sql: '',
+            columns: [],
+            data: [],
+            errorMessage: '',
+            explanation: ''
+          }
+        }
+        aiMsg.response.sql = sql
+        aiMsg.generatedSql = sql
+      },
+      onResult: (columns, data, rowCount) => {
+        if (!aiMsg.response) {
+          aiMsg.response = {
+            success: true,
+            sql: '',
+            columns: [],
+            data: [],
+            errorMessage: '',
+            explanation: ''
+          }
+        }
+        aiMsg.response.columns = columns
+        aiMsg.response.data = data
+      },
+      onExplanation: (explanation) => {
+        if (!aiMsg.response) {
+          aiMsg.response = {
+            success: true,
+            sql: '',
+            columns: [],
+            data: [],
+            errorMessage: '',
+            explanation: ''
+          }
+        }
+        aiMsg.response.explanation = explanation
+      },
+      onExecutionPlan: (plan) => {
+        if (aiMsg.response) {
+          aiMsg.response.executionPlan = plan
+        }
+      },
+      onComplete: (response) => {
+        aiMsg.loading = false
+        aiMsg.response = response
+      },
+      onError: (message) => {
+        aiMsg.loading = false
+        aiMsg.response = {
+          success: false,
+          sql: '',
+          columns: [],
+          data: [],
+          errorMessage: message,
+          explanation: ''
+        }
+      },
+      onSession: (sessionId) => {
+        currentSessionId.value = sessionId
+        sidebarRef.value?.loadSessions()
+      }
+    })
   } catch (error: any) {
     aiMsg.loading = false
     aiMsg.response = {
@@ -262,11 +329,36 @@ function handleSelectMessage(msg: MessageWithResponse) {
 }
 
 function handleLike(msg: MessageWithResponse) {
-  ElMessage.success('感谢您的反馈！这个查询已记录为优秀案例')
+  submitFeedback({
+    sessionId: msg.sessionId,
+    messageId: msg.id,
+    feedbackType: 'like',
+    question: messages.value.find(m => m.role === 'user')?.content,
+    sql: msg.response?.sql
+  }).then(() => {
+    ElMessage.success('感谢您的反馈！这个查询已记录为优秀案例')
+  }).catch(() => {
+    ElMessage.success('感谢您的反馈！')
+  })
 }
 
 function handleDislike(msg: MessageWithResponse) {
-  ElMessage.info('感谢您的反馈！我们会持续改进')
+  submitFeedback({
+    sessionId: msg.sessionId,
+    messageId: msg.id,
+    feedbackType: 'dislike',
+    question: messages.value.find(m => m.role === 'user')?.content,
+    sql: msg.response?.sql
+  }).then(() => {
+    ElMessage.info('感谢您的反馈！我们会持续改进')
+  }).catch(() => {
+    ElMessage.info('感谢您的反馈！')
+  })
+}
+
+function handleSqlExecuted(msg: MessageWithResponse, response: QueryResponse) {
+  msg.response = response
+  msg.generatedSql = response.sql
 }
 
 function handleRequery() {

@@ -153,3 +153,16 @@ CREATE TABLE IF NOT EXISTS chat_message (
     result_data TEXT COMMENT '查询结果JSON(仅assistant消息)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 13. 查询反馈表
+CREATE TABLE IF NOT EXISTS query_feedback (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT COMMENT '会话ID',
+    message_id BIGINT COMMENT '消息ID',
+    user_id BIGINT COMMENT '用户ID',
+    feedback_type VARCHAR(20) NOT NULL COMMENT '反馈类型: like/dislike',
+    content TEXT COMMENT '反馈内容(点踩时可填原因)',
+    question TEXT COMMENT '原始问题',
+    generated_sql TEXT COMMENT '生成的SQL',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

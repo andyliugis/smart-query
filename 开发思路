@@ -39,6 +39,22 @@
 待开发:
 - 第四步: 生产化 (多数据源、权限、流式输出、多轮对话)
 
+--- 优化路线实施进度 ---
+✅ Sprint 1: 核心 UI 重构
+   - 三栏式布局 (SessionSidebar + ChatView + DetailPanel)
+   - 消息卡片重构（多视图切换: 图表/表格/SQL）
+   - 引入 ECharts 并显示基础图表（自动推荐图表类型）
+
+✅ Sprint 2: 流式体验 + 基础优化
+   - SSE 流式响应 (ChatStreamController + streamApi.ts)
+   - SQL 确认和编辑（编辑弹窗 + 执行用户修改后的 SQL）
+   - 用户反馈功能（点赞/点踩 → 存储到 query_feedback 表）
+   - 右侧详情面板（SQL/执行计划/元数据）
+
+待实施:
+- Sprint 3: 多模型支持架构
+- Sprint 4: 多数据源 + 术语库 + Prompt 模板管理
+
 -------------------
 
 搭建前后端骨架 + 对接一个 LLM，实现最基础的 Text2SQL
