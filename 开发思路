@@ -51,8 +51,16 @@
    - 用户反馈功能（点赞/点踩 → 存储到 query_feedback 表）
    - 右侧详情面板（SQL/执行计划/元数据）
 
+✅ Sprint 3: 多模型支持架构
+   - LlmProvider 接口抽象
+   - ZhipuaiLlmProvider 和 DeepSeekLlmProvider 实现
+   - LlmProviderRegistry 注册中心
+   - LlmProviderConfig 模型和数据库表
+   - LlmProviderController 管理API
+   - LlmProvidersView.vue 前端管理页面
+   - LLMService 委托给活跃Provider
+
 待实施:
-- Sprint 3: 多模型支持架构
 - Sprint 4: 多数据源 + 术语库 + Prompt 模板管理
 
 -------------------
