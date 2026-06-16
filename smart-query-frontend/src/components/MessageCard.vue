@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import ChartComponent from './ChartComponent.vue'
 import { executeSql } from '../api/queryApi'
@@ -179,8 +179,8 @@ const editingSql = ref('')
 const executingSql = ref(false)
 
 const isUser = props.message.role === 'user'
-const hasData = props.response?.success && (props.response.data?.length > 0 || props.response.sql)
-const hasError = props.response && !props.response.success
+const hasData = computed(() => props.response?.success && (props.response.data?.length > 0 || !!props.response.sql))
+const hasError = computed(() => props.response && !props.response.success)
 
 function formatTime(timeStr?: string): string {
   if (!timeStr) return ''

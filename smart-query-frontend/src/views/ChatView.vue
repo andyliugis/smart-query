@@ -258,79 +258,19 @@ async function sendMessage() {
   isSending.value = true
 
   try {
-    // 使用流式 API
-    const { streamQuery } = await import('../api/streamApi')
-    
-    await streamQuery(question, currentSessionId.value, {
-      onStatus: (message, step) => {
-        aiMsg.content = message
-      },
-      onSql: (sql) => {
-        if (!aiMsg.response) {
-          aiMsg.response = {
-            success: true,
-            sql: '',
-            columns: [],
-            data: [],
-            errorMessage: '',
-            explanation: ''
-          }
-        }
-        aiMsg.response.sql = sql
-        aiMsg.generatedSql = sql
-      },
-      onResult: (columns, data, rowCount) => {
-        if (!aiMsg.response) {
-          aiMsg.response = {
-            success: true,
-            sql: '',
-            columns: [],
-            data: [],
-            errorMessage: '',
-            explanation: ''
-          }
-        }
-        aiMsg.response.columns = columns
-        aiMsg.response.data = data
-      },
-      onExplanation: (explanation) => {
-        if (!aiMsg.response) {
-          aiMsg.response = {
-            success: true,
-            sql: '',
-            columns: [],
-            data: [],
-            errorMessage: '',
-            explanation: ''
-          }
-        }
-        aiMsg.response.explanation = explanation
-      },
-      onExecutionPlan: (plan) => {
-        if (aiMsg.response) {
-          aiMsg.response.executionPlan = plan
-        }
-      },
-      onComplete: (response) => {
-        aiMsg.loading = false
-        aiMsg.response = response
-      },
-      onError: (message) => {
-        aiMsg.loading = false
-        aiMsg.response = {
-          success: false,
-          sql: '',
-          columns: [],
-          data: [],
-          errorMessage: message,
-          explanation: ''
-        }
-      },
-      onSession: (sessionId) => {
-        currentSessionId.value = sessionId
-        sidebarRef.value?.loadSessions()
+    // 使用普通查询接口（一次性返回完整结果）
+    const response = await queryData({ question, sessionId: currentSessionId.value })
+
+    aiMsg.loading = false
+    aiMsg.response = response
+    aiMsg.generatedSql = response.sql
+    if (response.success) {
+      // 接口可能回传 sessionId（后端在新会话时会创建并返回）
+      if (response.sessionId) {
+        aiMsg.sessionId = response.sessionId
       }
-    })
+      aiMsg.content = response.explanation
+    }
   } catch (error: any) {
     aiMsg.loading = false
     aiMsg.response = {
