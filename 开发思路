@@ -59,6 +59,10 @@
    - LlmProviderController 管理API
    - LlmProvidersView.vue 前端管理页面
    - LLMService 委托给活跃Provider
+   - UserContext 用户感知架构基础
+   - 数据源管理 CRUD (DatasourceRepository/Service/Controller)
+   - DatasourcesView.vue 前端数据源管理页面
+   - 支持 H2/MySQL/PostgreSQL/ClickHouse 连接测试
 
 待实施:
 - Sprint 4: 多数据源 + 术语库 + Prompt 模板管理
