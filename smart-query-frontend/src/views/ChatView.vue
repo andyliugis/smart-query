@@ -16,9 +16,22 @@
           <span class="session-desc">与 AI 对话，探索数据</span>
         </div>
         <div class="header-right">
-          <el-button text size="small">
-            <span style="font-size: 16px;">⚙️</span>
-          </el-button>
+          <el-dropdown trigger="click">
+            <el-button text size="small" class="user-menu-btn">
+              <el-avatar :size="28" :icon="UserFilled" />
+              <span class="user-name">{{ userInfo?.nickname || userInfo?.username || '未登录' }}</span>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-if="!isLoggedIn" @click="goToLogin">
+                  <el-icon><User /></el-icon> 登录
+                </el-dropdown-item>
+                <el-dropdown-item v-if="isLoggedIn" @click="handleLogout" divided>
+                  <el-icon><SwitchButton /></el-icon> 退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </div>
 
@@ -110,14 +123,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, nextTick, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { UserFilled, User, SwitchButton } from '@element-plus/icons-vue'
 import SessionSidebar from '../components/SessionSidebar.vue'
 import MessageCard from '../components/MessageCard.vue'
 import DetailPanel from '../components/DetailPanel.vue'
 import { queryData, type QueryResponse } from '../api/queryApi'
 import { getSessionMessages, createSession, type ChatMessage } from '../api/chatApi'
 import { submitFeedback } from '../api/feedbackApi'
+import { getUserInfo, clearAuthData, isAuthenticated } from '../api/authApi'
 
 interface MessageWithResponse extends ChatMessage {
   response?: QueryResponse
@@ -125,6 +141,7 @@ interface MessageWithResponse extends ChatMessage {
 }
 
 // 状态
+const router = useRouter()
 const sidebarRef = ref()
 const messagesRef = ref<HTMLElement>()
 const currentSessionId = ref<number>()
@@ -132,6 +149,19 @@ const messages = ref<MessageWithResponse[]>([])
 const inputText = ref('')
 const isSending = ref(false)
 const selectedMessage = ref<MessageWithResponse>()
+const userInfo = ref<{ userId: number; username: string; nickname: string } | null>(null)
+const isLoggedIn = computed(() => isAuthenticated())
+
+onMounted(() => {
+  // 从 localStorage 加载用户信息
+  const info = getUserInfo()
+  if (info) {
+    userInfo.value = info
+  } else if (!isAuthenticated()) {
+    // 未登录，跳转到登录页
+    router.push('/login')
+  }
+})
 
 const exampleQuestions = [
   '上个月销售额最高的产品是什么？',
@@ -388,6 +418,25 @@ function scrollToBottom() {
     }
   })
 }
+
+function goToLogin() {
+  router.push('/login')
+}
+
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    clearAuthData()
+    ElMessage.success('已退出登录')
+    router.push('/login')
+  } catch {
+    // 用户取消
+  }
+}
 </script>
 
 <style scoped>
@@ -431,6 +480,29 @@ function scrollToBottom() {
 .session-desc {
   font-size: 12px;
   color: #9ca3af;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.user-menu-btn:hover {
+  background: #f3f4f6;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #374151;
 }
 
 .chat-messages {

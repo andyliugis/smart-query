@@ -48,13 +48,30 @@
         </div>
       </div>
     </div>
+
+    <!-- 底部用户信息 -->
+    <div class="sidebar-footer">
+      <div class="user-info" v-if="userInfo">
+        <el-avatar :size="32" :icon="UserFilled" />
+        <div class="user-details">
+          <div class="user-name">{{ userInfo.nickname || userInfo.username }}</div>
+          <div class="user-role">{{ userInfo.username }}</div>
+        </div>
+        <el-button type="link" @click="handleLogout" class="logout-btn">
+          <el-icon><SwitchButton /></el-icon>
+        </el-button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { UserFilled, SwitchButton } from '@element-plus/icons-vue'
 import { getSessions, createSession, type ChatSession } from '../api/chatApi'
+import { getUserInfo, clearAuthData } from '../api/authApi'
 
 const props = defineProps<{
   currentSessionId?: number
@@ -65,8 +82,14 @@ const emit = defineEmits<{
   (e: 'create'): void
 }>()
 
+const router = useRouter()
 const sessions = ref<ChatSession[]>([])
 const loading = ref(false)
+const userInfo = ref<{ userId: number; username: string; nickname: string } | null>(null)
+
+onMounted(() => {
+  userInfo.value = getUserInfo()
+})
 
 async function loadSessions() {
   try {
@@ -140,6 +163,21 @@ function formatTime(timeStr: string): string {
   if (days < 7) return `${days} 天前`
   
   return date.toLocaleDateString('zh-CN')
+}
+
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    clearAuthData()
+    ElMessage.success('已退出登录')
+    router.push('/login')
+  } catch {
+    // 用户取消
+  }
 }
 
 onMounted(() => {
@@ -303,5 +341,46 @@ defineExpose({
 
 .empty-sessions {
   padding: 40px 0;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  background: #f9fafb;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.logout-btn {
+  padding: 4px;
+  color: #9ca3af;
+}
+
+.logout-btn:hover {
+  color: #ef4444;
 }
 </style>

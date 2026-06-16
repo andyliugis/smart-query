@@ -8,6 +8,8 @@ import com.smartquery.model.QueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -46,7 +48,17 @@ public class ChatStreamController {
     public SseEmitter streamQuery(@RequestBody QueryRequest request) {
         SseEmitter emitter = new SseEmitter(120000L); // 2分钟超时
 
+        // 在主线程中获取认证信息，然后传递到子线程
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final Long userId = (authentication != null && authentication.getPrincipal() instanceof Long) 
+                ? (Long) authentication.getPrincipal() : null;
+
         executor.execute(() -> {
+            // 在子线程中设置认证信息
+            if (authentication != null) {
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+            
             try {
                 String question = request.getQuestion();
                 Long sessionId = request.getSessionId();

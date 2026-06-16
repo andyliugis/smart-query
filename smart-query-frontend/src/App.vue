@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
-    <!-- 只有在非 chat 路由时显示原来的左侧导航栏 -->
-    <aside v-if="!isChatRoute" class="sidebar">
+    <!-- 只有在非 chat 和 login 路由时显示左侧导航栏 -->
+    <aside v-if="showSidebar" class="sidebar">
       <div class="logo">
         <span class="logo-icon">🔍</span>
         <span class="logo-text">智能问数</span>
@@ -37,7 +37,7 @@
     </aside>
 
     <!-- 右侧内容区 -->
-    <main :class="['content', { 'full-width': isChatRoute }]">
+    <main :class="['content', { 'full-width': !showSidebar }]">
       <router-view />
     </main>
   </div>
@@ -55,8 +55,11 @@ const router = useRouter()
 const activeMenu = computed(() => route.path)
 const userInfo = ref(getUserInfo())
 
-// 判断是否是 chat 路由
-const isChatRoute = computed(() => route.path === '/chat')
+// 判断是否显示侧边栏（登录页和聊天页不显示）
+const showSidebar = computed(() => {
+  const path = route.path
+  return path !== '/login' && path !== '/chat' && isAuthenticated()
+})
 
 onMounted(() => {
   if (!isAuthenticated()) {
