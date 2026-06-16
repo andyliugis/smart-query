@@ -166,3 +166,22 @@ CREATE TABLE IF NOT EXISTS query_feedback (
     generated_sql TEXT COMMENT '生成的SQL',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 14. LLM 提供商配置表
+CREATE TABLE IF NOT EXISTS llm_provider_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE COMMENT '提供商名称: zhipuai/deepseek/openai',
+    display_name VARCHAR(100) COMMENT '显示名称',
+    api_key VARCHAR(500) COMMENT 'API密钥',
+    base_url VARCHAR(500) COMMENT 'API基础URL',
+    model_name VARCHAR(100) COMMENT '模型名称',
+    is_active BOOLEAN DEFAULT FALSE COMMENT '是否启用',
+    config_json TEXT COMMENT '额外配置JSON',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 初始数据：预置智谱提供商
+INSERT INTO llm_provider_config (name, display_name, is_active, model_name) 
+VALUES ('zhipuai', '智谱 GLM', TRUE, 'glm-4-flash')
+ON DUPLICATE KEY UPDATE is_active = TRUE;

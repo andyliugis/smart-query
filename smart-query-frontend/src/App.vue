@@ -19,6 +19,10 @@
           <el-icon><Setting /></el-icon>
           <span>元数据管理</span>
         </el-menu-item>
+        <el-menu-item index="/llm-providers">
+          <el-icon><DataLine /></el-icon>
+          <span>模型管理</span>
+        </el-menu-item>
       </el-menu>
 
       <!-- 用户信息 -->
@@ -47,7 +51,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Setting, UserFilled, SwitchButton } from '@element-plus/icons-vue'
+import { ChatDotRound, Setting, UserFilled, SwitchButton, DataLine } from '@element-plus/icons-vue'
 import { getUserInfo, clearAuthData, isAuthenticated } from './api/authApi'
 
 const route = useRoute()

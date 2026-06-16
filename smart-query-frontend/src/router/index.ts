@@ -25,6 +25,12 @@ const router = createRouter({
       name: 'metadata',
       component: () => import('../views/MetadataView.vue'),
       meta: { title: '元数据管理', requiresAuth: true }
+    },
+    {
+      path: '/llm-providers',
+      name: 'llm-providers',
+      component: () => import('../views/LlmProvidersView.vue'),
+      meta: { title: '模型管理', requiresAuth: true }
     }
   ]
 })
